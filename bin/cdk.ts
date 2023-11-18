@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { NodejsAwsShopReactBackStack } from '../lib/cdk';
+import { AwsStack } from '../lib/cdk';
+
+const region = process.env.AWS_REGION
+const account = process.env.AWS_ACCOUNT
 
 const app = new cdk.App();
-new NodejsAwsShopReactBackStack(app, 'NodejsAwsShopReactBackStack');
+new AwsStack(app, 'AwsStack',
+  {
+    env: {
+      region, account
+    }
+  }
+);

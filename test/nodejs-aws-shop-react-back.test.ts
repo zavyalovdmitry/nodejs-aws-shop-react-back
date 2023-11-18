@@ -5,7 +5,7 @@ import * as NodejsAwsShopReactBack from '../lib/cdk';
 test('SQS Queue and SNS Topic Created', () => {
   const app = new cdk.App();
   // WHEN
-  const stack = new NodejsAwsShopReactBack.NodejsAwsShopReactBackStack(app, 'MyTestStack');
+  const stack = new NodejsAwsShopReactBack.AwsStack(app, 'MyTestStack');
   // THEN
 
   const template = Template.fromStack(stack);

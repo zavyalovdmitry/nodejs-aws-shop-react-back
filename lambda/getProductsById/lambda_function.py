@@ -9,16 +9,22 @@ def lambda_handler(event, context):
     object_key = "data.json"  
     file_content = s3_client.get_object(Bucket=S3_BUCKET, Key=object_key)["Body"].read().decode('utf-8')
     list_data = json.loads(file_content)
+    productId = event["pathParameters"]["productId"]
     
     for record in list_data:
-        print(record)
-        if record["id"] == "1":
+        if record["id"] == productId:
             return {
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                },
                 'statusCode': 200,
-                'body': json.dumps(event)
+                'body': json.dumps(record)
             }
 
     return {
-        'statusCode': 200,
-        'body': json.dumps(event["pathParameters"]["productId"])
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+        },
+        'statusCode': 404,
+        'body': 'ERROR: product not found'
     }

@@ -9,6 +9,9 @@ def lambda_handler(event, context):
     file_content = s3_client.get_object(Bucket=S3_BUCKET, Key=object_key)["Body"].read().decode('utf-8')
   
     return {
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+        },
         'statusCode': 200,
         'body': json.dumps(file_content)
     }
