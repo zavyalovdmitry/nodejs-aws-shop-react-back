@@ -27,14 +27,12 @@ def lambda_handler(event, context):
         stocksItem = {}
         
         productId = str(uuid.uuid4())
-        stockId = str(uuid.uuid4())
-    
+
         productsItem['id'] = {'S': productId}
         productsItem['title'] = {'S': record["title"]}
         productsItem['description'] = {'S': record["description"]}
         productsItem['price'] = {'N': str(record["price"])}
         
-        stocksItem['id'] = {'S': stockId}
         stocksItem['product_id'] = {'S': productId}
         stocksItem['count'] = {'N': str(13)}
         
