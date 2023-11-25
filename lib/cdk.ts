@@ -8,6 +8,11 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
+const lambda_envs =       {
+  dynamo_table_products: "products",
+  dynamo_table_stocks: "stocks",
+}
+
 export class AwsStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -42,6 +47,7 @@ export class AwsStack extends Stack {
       runtime: lambda.Runtime.PYTHON_3_11, 
       code: lambda.Code.fromAsset("lambda/getProductsList"), 
       handler: 'lambda_function.lambda_handler', 
+      environment: lambda_envs
     });
 
     const productsList = api.root.addResource('products');
@@ -61,6 +67,7 @@ export class AwsStack extends Stack {
       runtime: lambda.Runtime.PYTHON_3_11, 
       code: lambda.Code.fromAsset("lambda/getProductsById"), 
       handler: 'lambda_function.lambda_handler', 
+      environment: lambda_envs
     });
   
     const productsBuId = productsList.addResource('{productId}');

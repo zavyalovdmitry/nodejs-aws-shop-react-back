@@ -1,25 +1,39 @@
 import json
 import boto3
+import os
+import botocore
 
-s3_client = boto3.client("s3")
-S3_BUCKET = 'dz-task-3'
+from decimal import Decimal
+
+class DecimalEncoder(json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, Decimal):
+      return str(obj)
+    return json.JSONEncoder.default(self, obj)
+
+tableProducts = os.environ['dynamo_table_products']
+tableStocks = os.environ['dynamo_table_stocks']
 
 def lambda_handler(event, context):
     print(event)
-    object_key = "data.json"  
-    file_content = s3_client.get_object(Bucket=S3_BUCKET, Key=object_key)["Body"].read().decode('utf-8')
-    list_data = json.loads(file_content)
+
     productId = event["pathParameters"]["productId"]
     
-    for record in list_data:
-        if record["id"] == productId:
-            return {
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                },
-                'statusCode': 200,
-                'body': json.dumps(record)
-            }
+    dynamodb = boto3.resource("dynamodb")
+    products = dynamodb.Table(tableProducts)
+    stocks = dynamodb.Table(tableStocks)
+    
+    product = products.get_item(Key={"id": productId})['Item']
+    count = stocks.get_item(Key={"product_id": productId})['Item']['count']
+    product['count'] = count
+  
+    return {
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+        },
+        'statusCode': 200,
+        'body': json.dumps(product, cls=DecimalEncoder)
+    }
 
     return {
         'headers': {
