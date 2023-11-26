@@ -63,12 +63,29 @@ def lambda_handler(event, context):
         stocksItem['count'] = {'N': str(count)}
         
         try:        
-            dynamo.put_item(            
-                TableName=tableProducts,            
-                Item=productsItem)    
-            dynamo.put_item(            
-                TableName=tableStocks,            
-                Item=stocksItem)    
+            # dynamo.put_item(            
+            #     TableName=tableProducts,            
+            #     Item=productsItem)    
+            # dynamo.put_item(            
+            #     TableName=tableStocks,            
+            #     Item=stocksItem)    
+                
+            dynamo.transact_write_items(
+                TransactItems=[
+                    {
+                        'Put': {
+                            'TableName': tableProducts,
+                            'Item': productsItem
+                        }
+                    },
+                    {
+                        'Put': {
+                            'TableName': tableStocks,
+                            'Item':stocksItem
+                        }
+                    }
+                ]
+            )
             
         except botocore.exceptions.ClientError as err:        
             logger.error(            
