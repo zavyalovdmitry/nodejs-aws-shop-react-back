@@ -15,36 +15,44 @@ tableProducts = os.environ['dynamo_table_products']
 tableStocks = os.environ['dynamo_table_stocks']
 
 def lambda_handler(event, context):
-    dynamodb = boto3.resource("dynamodb")
-    products = dynamodb.Table(tableProducts)
-    stocks = dynamodb.Table(tableStocks)
-    
     try:
-        # Loop through subscribers in DynamoDB
-        response = products.scan()
-        all_products = response['Items']
+        dynamodb = boto3.resource("dynamodb")
+        products = dynamodb.Table(tableProducts)
+        stocks = dynamodb.Table(tableStocks)
+        all_products = []
     
-        # Paginate through DynamoDB response
-        while 'LastEvaluatedKey' in response:
-            response = products.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
-            all_products.extend(response['Items'])
+        try:
+            # Loop through subscribers in DynamoDB
+            response = products.scan()
+            all_products = response['Items']
+            print("all_products: ",all_products)
+    
+            # Paginate through DynamoDB response
+            while 'LastEvaluatedKey' in response:
+                response = products.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+                all_products.extend(response['Items'])
+            
+        except botocore.exceptions.ClientError as e:
+            print(e.response['Error']['Message'])
         
-    except botocore.exceptions.ClientError as e:
-        print(e.response['Error']['Message'])
-    
-    print("all_products: ",all_products)
-    
-    joined_data = []
-    
-    for product in all_products:
-        count = stocks.get_item(Key={"product_id": product["id"]})['Item']['count']
-        product["count"] = count
-        joined_data.append(product)
-  
-    return {
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-        },
-        'statusCode': 200,
-        'body': json.dumps(joined_data, cls=DecimalEncoder)
-    }
+        print("all_products: ",all_products)
+        
+        joined_data = []
+        
+        for product in all_products:
+            count = stocks.get_item(Key={"product_id": product["id"]})['Item']['count']
+            product["count"] = count
+            joined_data.append(product)
+      
+        return {
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+            },
+            'statusCode': 200,
+            'body': json.dumps(joined_data, cls=DecimalEncoder)
+        }
+    except:
+        return {
+            'statusCode': 500,
+            'body': json.dumps('Something went wrong :(')
+        }

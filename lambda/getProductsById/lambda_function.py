@@ -15,30 +15,27 @@ tableProducts = os.environ['dynamo_table_products']
 tableStocks = os.environ['dynamo_table_stocks']
 
 def lambda_handler(event, context):
-    print(event)
+    try:
+        productId = event["pathParameters"]["productId"]
+        
+        dynamodb = boto3.resource("dynamodb")
+        products = dynamodb.Table(tableProducts)
+        stocks = dynamodb.Table(tableStocks)
+        
+        product = products.get_item(Key={"id": productId})['Item']
+        count = stocks.get_item(Key={"product_id": productId})['Item']['count']
+        product['count'] = count
+      
+        return {
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+            },
+            'statusCode': 200,
+            'body': json.dumps(product, cls=DecimalEncoder)
+        }
 
-    productId = event["pathParameters"]["productId"]
-    
-    dynamodb = boto3.resource("dynamodb")
-    products = dynamodb.Table(tableProducts)
-    stocks = dynamodb.Table(tableStocks)
-    
-    product = products.get_item(Key={"id": productId})['Item']
-    count = stocks.get_item(Key={"product_id": productId})['Item']['count']
-    product['count'] = count
-  
-    return {
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-        },
-        'statusCode': 200,
-        'body': json.dumps(product, cls=DecimalEncoder)
-    }
-
-    return {
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-        },
-        'statusCode': 404,
-        'body': 'ERROR: product not found'
-    }
+    except:
+        return {
+            'statusCode': 500,
+            'body': json.dumps('Something went wrong :(')
+        }
