@@ -18,7 +18,7 @@ export class AwsStack extends Stack {
     super(scope, id, props);
 
     const api = new apigateway.RestApi(this, 'api', {
-      description: 'task 3 : api gateway',
+      description: 'task 4 : api gateway',
       deployOptions: {
         stageName: 'dev',
       },
@@ -42,6 +42,14 @@ export class AwsStack extends Stack {
       actions: ['s3:*'],
       resources: ['arn:aws:s3:::*'],
     });
+    
+    const dynamoReadPolicy = new iam.PolicyStatement({
+      actions: ['dynamodb:*'],
+      resources: [
+        'arn:aws:dynamodb:::*',
+        '*'
+      ],
+    });
 
     const getProductsList_lambda = new lambda.Function(this, "getProductsList", {
       runtime: lambda.Runtime.PYTHON_3_11, 
@@ -58,8 +66,8 @@ export class AwsStack extends Stack {
     );
 
     getProductsList_lambda.role?.attachInlinePolicy(
-      new iam.Policy(this, 'list-buckets-policy-getProductsList', {
-        statements: [s3ListBucketsPolicy],
+      new iam.Policy(this, 'dynamo-read-policy-getProductsList', {
+        statements: [dynamoReadPolicy],
       }),
     );
 
@@ -78,8 +86,26 @@ export class AwsStack extends Stack {
     );
 
     getProductsById_lambda.role?.attachInlinePolicy(
-      new iam.Policy(this, 'list-buckets-policy-getProductsById', {
-        statements: [s3ListBucketsPolicy],
+      new iam.Policy(this, 'dynamo-read-policy-getProductsById', {
+        statements: [dynamoReadPolicy],
+      }),
+    );
+
+    const createProduct_lambda = new lambda.Function(this, "createProduct", {
+      runtime: lambda.Runtime.PYTHON_3_11, 
+      code: lambda.Code.fromAsset("lambda/createProduct"), 
+      handler: 'lambda_function.lambda_handler', 
+      environment: lambda_envs
+    });
+
+    productsList.addMethod(
+      'POST',
+      new apigateway.LambdaIntegration(createProduct_lambda, {proxy: true}),
+    );
+
+    createProduct_lambda.role?.attachInlinePolicy(
+      new iam.Policy(this, 'dynamo-read-policy-createProduct', {
+        statements: [dynamoReadPolicy],
       }),
     );
   }
