@@ -15,6 +15,7 @@ tableProducts = os.environ['dynamo_table_products']
 tableStocks = os.environ['dynamo_table_stocks']
 
 def lambda_handler(event, context):
+    print('Got incoming request: ', event)
     try:
         productId = event["pathParameters"]["productId"]
         
